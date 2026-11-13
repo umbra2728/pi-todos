@@ -1,6 +1,6 @@
 {
   "name": "pi-todos",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Incremental session-native todo tracking for Pi with lifecycle actions, dependencies, replay, and a live overlay.",
   "type": "module",
   "license": "MIT",

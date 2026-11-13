@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.3 - 2026-11-13
+
+- Support `activeForm` in single-create calls and inside batch items.
+- Normalize common `title`, `content`, `active_form`, and `dependsOn` batch aliases.
+- Ignore model-assigned IDs inside batch items and reject conflicting subject aliases safely.
+- Add a full create payload matrix covering the malformed calls observed in live sessions.
+
 ## 0.1.2 - 2026-11-13
 
 - Normalize model-generated create calls with server IDs, lifecycle-only fields, and conflicting single/batch fields.

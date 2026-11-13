@@ -55,6 +55,25 @@ describe("argument normalization", () => {
     });
   });
 
+  it("normalizes common batch item aliases and discards model-assigned ids", () => {
+    assert.deepEqual(
+      prepareTodoArguments({
+        action: "create",
+        tasks: [
+          { id: "model-id", title: "First", active_form: "working", dependsOn: [], status: "pending" },
+          { content: "Second", activeForm: "building", blockedBy: [1] },
+        ],
+      }),
+      {
+        action: "create",
+        tasks: [
+          { subject: "First", activeForm: "working", blockedBy: [] },
+          { subject: "Second", activeForm: "building", blockedBy: [1] },
+        ],
+      },
+    );
+  });
+
   it("decodes double-encoded batches and strips optional nulls", () => {
     assert.deepEqual(
       prepareTodoArguments({ action: "create", tasks: "[{\"subject\":\"One\"},{\"subject\":\"Two\",\"owner\":null}]" }),
@@ -85,7 +104,7 @@ describe("argument normalization", () => {
         status: "in_progress",
         completedLimit: null,
       }),
-      { action: "create", subject: "Find and validate a working RCE", description: "Continue review" },
+      { action: "create", subject: "Find and validate a working RCE", description: "Continue review", activeForm: "hunting and validating an RCE" },
     );
   });
 

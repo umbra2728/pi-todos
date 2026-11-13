@@ -76,6 +76,34 @@ describe("tool and journal integration", () => {
     assert.ok(state.tasks.slice(15).every((task) => task.status === "pending"));
   });
 
+  it("accepts and preserves activeForm inside batch items", async () => {
+    const host = createHost();
+    piTodos(host.pi as never);
+    const result = await execute(host, {
+      action: "create",
+      tasks: [
+        {
+          subject: "Find an exploitable primitive",
+          description: "Perform a full-scope source review",
+          activeForm: "finding an exploitable primitive",
+        },
+        {
+          subject: "Build and validate the exploit chain",
+          description: "Turn a validated primitive into a controlled local exploit",
+          activeForm: "building and validating the exploit chain",
+        },
+      ],
+    });
+    assert.deepEqual(result.details.ids, [1, 2]);
+    const state = getSessionState(host.ctx as never);
+    assert.deepEqual(state.tasks.map((task) => task.activeForm), [
+      "finding an exploitable primitive",
+      "building and validating the exploit chain",
+    ]);
+    await execute(host, { action: "start", id: 1 });
+    assert.equal(getSessionState(host.ctx as never).tasks[0]?.activeForm, "finding an exploitable primitive");
+  });
+
   it("rejects inapplicable fields on query actions", async () => {
     const host = createHost();
     piTodos(host.pi as never);

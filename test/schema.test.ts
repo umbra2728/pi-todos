@@ -30,6 +30,10 @@ describe("Pi schema validation", () => {
   });
 
   it("validates strict batch item properties", () => {
-    assert.throws(() => validate({ action: "create", tasks: [{ subject: "Task", activeForm: "wrong place" }] }), /activeForm/);
+    assert.deepEqual(
+      validate({ action: "create", tasks: [{ subject: "Task", activeForm: "working" }] }),
+      { action: "create", tasks: [{ subject: "Task", activeForm: "working" }] },
+    );
+    assert.throws(() => validate({ action: "create", tasks: [{ subject: "Task", priority: "high" }] }), /priority/);
   });
 });

@@ -10,6 +10,7 @@ const CreateTaskSchema = Type.Object(
   {
     subject: Type.String({ description: "Short imperative task title" }),
     description: Type.Optional(NullableText),
+    activeForm: Type.Optional(NullableText),
     blockedBy: Type.Optional(TaskIds),
     owner: Type.Optional(NullableText),
   },

@@ -11,7 +11,7 @@ import type {
 } from "./types.ts";
 
 const ACTION_FIELDS: Record<TodoAction, ReadonlySet<string>> = {
-  create: new Set(["subject", "description", "blockedBy", "owner", "tasks"]),
+  create: new Set(["subject", "description", "activeForm", "blockedBy", "owner", "tasks"]),
   start: new Set(["id", "activeForm"]),
   complete: new Set(["id", "evidence"]),
   reopen: new Set(["id"]),
@@ -127,11 +127,11 @@ function result(state: TodoState, before: TodoState, ids: number[], message: str
 function createTasks(state: TodoState, params: TodoParams, at: string): MutationResult {
   if (params.tasks !== undefined && params.subject !== undefined) throw new TodoError("create requires subject or tasks[], not both");
   if (params.tasks !== undefined) {
-    for (const field of ["description", "blockedBy", "owner"]) {
+    for (const field of ["description", "activeForm", "blockedBy", "owner"]) {
       if (params[field] !== undefined) throw new TodoError(`create with tasks[] takes ${field} on each item, not at the top level`);
     }
   }
-  const rawItems = params.tasks ?? [{ subject: params.subject, description: params.description, blockedBy: params.blockedBy, owner: params.owner }];
+  const rawItems = params.tasks ?? [{ subject: params.subject, description: params.description, activeForm: params.activeForm, blockedBy: params.blockedBy, owner: params.owner }];
   if (!Array.isArray(rawItems) || rawItems.length === 0) throw new TodoError("subject required for create");
   const siblingIds = new Set(rawItems.map((_, index) => state.nextId + index));
   const specs = rawItems.map((raw, index): CreateTaskInput => {
@@ -145,12 +145,14 @@ function createTasks(state: TodoState, params: TodoParams, at: string): Mutation
     const blockedBy = cleanIds(spec.blockedBy, "blockedBy");
     validateDependencies(state, id, blockedBy, siblingIds);
     const description = cleanText(spec.description, "description");
+    const activeForm = cleanText(spec.activeForm, "activeForm");
     const owner = cleanText(spec.owner, "owner");
     return {
       id,
       subject: spec.subject.trim(),
       status: "pending",
       ...(description ? { description } : {}),
+      ...(activeForm ? { activeForm } : {}),
       ...(owner ? { owner } : {}),
       ...(blockedBy.length ? { blockedBy } : {}),
       createdAt: at,

@@ -37,6 +37,7 @@ export interface Task {
 export interface CreateTaskInput {
   subject: string;
   description?: string | null;
+  activeForm?: string | null;
   blockedBy?: number[];
   owner?: string | null;
 }

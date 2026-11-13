@@ -27,6 +27,10 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+function isAbsent(value: unknown): boolean {
+  return value === undefined || value === null;
+}
+
 function parseJson(value: string): unknown {
   try {
     return JSON.parse(value);
@@ -49,7 +53,23 @@ function normalizeBatchItem(value: unknown): unknown {
   const decoded = decodeObject(value);
   if (!isRecord(decoded)) return decoded;
   const item = { ...decoded };
-  for (const field of ["description", "blockedBy", "owner"]) {
+  if (isAbsent(item.subject) && item.title !== undefined) {
+    item.subject = item.title;
+    delete item.title;
+  } else if (isAbsent(item.subject) && item.content !== undefined) {
+    item.subject = item.content;
+    delete item.content;
+  }
+  if (isAbsent(item.activeForm) && item.active_form !== undefined) {
+    item.activeForm = item.active_form;
+    delete item.active_form;
+  }
+  if (isAbsent(item.blockedBy) && item.dependsOn !== undefined) {
+    item.blockedBy = item.dependsOn;
+    delete item.dependsOn;
+  }
+  for (const field of ["id", "taskId", "task_id", "status", "evidence"]) delete item[field];
+  for (const field of ["description", "activeForm", "blockedBy", "owner"]) {
     if (item[field] === null) delete item[field];
   }
   return item;
@@ -58,20 +78,34 @@ function normalizeBatchItem(value: unknown): unknown {
 export function prepareTodoArguments(args: unknown): TodoParams {
   if (!isRecord(args)) return args as TodoParams;
   const input: Record<string, unknown> = { ...args };
-  if (input.id === undefined && input.taskId !== undefined) {
+  if (isAbsent(input.id) && input.taskId !== undefined) {
     input.id = input.taskId;
     delete input.taskId;
   }
-  if (input.id === undefined && input.task_id !== undefined) {
+  if (isAbsent(input.id) && input.task_id !== undefined) {
     input.id = input.task_id;
     delete input.task_id;
   }
-  if (input.activeForm === undefined && input.active_form !== undefined) {
+  if (isAbsent(input.activeForm) && input.active_form !== undefined) {
     input.activeForm = input.active_form;
     delete input.active_form;
   }
   if (input.action === "add") input.action = "create";
   if (input.action === "done") input.action = "complete";
+  if (input.action === "remove") input.action = "delete";
+  if (input.action === "create" && isAbsent(input.subject)) {
+    if (input.title !== undefined) {
+      input.subject = input.title;
+      delete input.title;
+    } else if (input.content !== undefined) {
+      input.subject = input.content;
+      delete input.content;
+    }
+  }
+  if (input.action === "create" && isAbsent(input.blockedBy) && input.dependsOn !== undefined) {
+    input.blockedBy = input.dependsOn;
+    delete input.dependsOn;
+  }
   const matchingLifecycleStatus: Partial<Record<string, string>> = {
     start: "in_progress",
     complete: "completed",
@@ -97,11 +131,11 @@ export function prepareTodoArguments(args: unknown): TodoParams {
     delete input[field];
   }
   if (input.action === "create") {
-    for (const field of ["id", "activeForm", "evidence", "addBlockedBy", "removeBlockedBy", "status", "completedLimit"]) {
+    for (const field of ["id", "evidence", "addBlockedBy", "removeBlockedBy", "status", "completedLimit"]) {
       delete input[field];
     }
     if (Array.isArray(input.tasks)) {
-      for (const field of ["subject", "description", "blockedBy", "owner"]) delete input[field];
+      for (const field of ["subject", "description", "activeForm", "blockedBy", "owner"]) delete input[field];
     }
   }
   return input as TodoParams;

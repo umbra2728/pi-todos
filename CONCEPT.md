@@ -79,7 +79,7 @@ The extension registers one tool named `todo`, with `executionMode: "sequential"
 }
 ```
 
-`description`, `blockedBy`, and `owner` are optional. New tasks start as `pending`.
+`description`, `activeForm`, `blockedBy`, and `owner` are optional. New tasks start as `pending`; `activeForm` is preserved for a later `start`.
 
 ### Create an initial batch atomically
 

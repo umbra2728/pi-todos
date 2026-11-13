@@ -75,7 +75,7 @@ An initial batch:
 }
 ```
 
-Batch creation is atomic and appends tasks. It never replaces the current list. Batch items may depend on existing tasks or earlier items in the same batch; forward and self references are rejected.
+Batch creation is atomic and appends tasks. It never replaces the current list. Batch items may depend on existing tasks or earlier items in the same batch; forward and self references are rejected. `title`/`content`, `active_form`, and `dependsOn` are normalized to `subject`, `activeForm`, and `blockedBy`. Model-assigned IDs are ignored.
 
 ### Start, complete, and reopen
 

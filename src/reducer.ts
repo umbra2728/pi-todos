@@ -83,7 +83,8 @@ function validateDependencies(state: TodoState, ownerId: number, blockedBy: numb
   for (const id of blockedBy) {
     if (id === ownerId) throw new TodoError(`cannot block #${ownerId} on itself`);
     if (siblingIds.has(id)) {
-      throw new TodoError(`blockedBy: #${id} is another item in this batch; create the prerequisite first`);
+      if (id < ownerId) continue;
+      throw new TodoError(`blockedBy: #${id} must reference an earlier batch item`);
     }
     const dependency = state.tasks.find((task) => task.id === id);
     if (!dependency) throw new TodoError(`blockedBy: #${id} not found`);

@@ -69,11 +69,17 @@ describe("create and update validation", () => {
     assert.equal(state.tasks[1]?.owner, "worker");
   });
 
-  it("rejects sibling dependencies and empty batches without mutation", () => {
+  it("accepts earlier batch dependencies and rejects forward references without mutation", () => {
     const initial = createEmptyState();
+    const state = applyMutation(
+      initial,
+      { action: "create", tasks: [{ subject: "One" }, { subject: "Two", blockedBy: [1] }] },
+      at(),
+    ).state;
+    assert.deepEqual(state.tasks[1]?.blockedBy, [1]);
     assert.throws(
-      () => applyMutation(initial, { action: "create", tasks: [{ subject: "One" }, { subject: "Two", blockedBy: [1] }] }, at()),
-      /another item in this batch/,
+      () => applyMutation(initial, { action: "create", tasks: [{ subject: "One", blockedBy: [2] }, { subject: "Two" }] }, at()),
+      /must reference an earlier batch item/,
     );
     assert.deepEqual(initial, createEmptyState());
     assert.throws(() => applyMutation(initial, { action: "create", tasks: [] }, at()), /subject required/);

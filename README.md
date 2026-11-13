@@ -75,7 +75,7 @@ An initial batch:
 }
 ```
 
-Batch creation is atomic and appends tasks. It never replaces the current list. Batch items cannot depend on siblings created in the same call.
+Batch creation is atomic and appends tasks. It never replaces the current list. Batch items may depend on existing tasks or earlier items in the same batch; forward and self references are rejected.
 
 ### Start, complete, and reopen
 

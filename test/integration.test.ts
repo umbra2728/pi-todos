@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import piTodos from "../src/index.ts";
+import { prepareTodoArguments } from "../src/normalize.ts";
 import { replayOperations, TODO_OPERATION_TYPE } from "../src/replay.ts";
 import { getSessionState } from "../src/store.ts";
 import type { TodoToolOutput } from "../src/types.ts";
@@ -39,6 +40,40 @@ describe("tool and journal integration", () => {
       const data = (entry as { data: Record<string, unknown> }).data;
       return !("tasks" in data);
     }));
+  });
+
+  it("accepts the exact repeated batch shape emitted by Kimi", async () => {
+    const host = createHost();
+    piTodos(host.pi as never);
+    await execute(host, {
+      action: "create",
+      tasks: Array.from({ length: 15 }, (_, index) => ({ subject: `Existing ${index + 1}` })),
+    });
+    const raw = {
+      action: "create",
+      id: 16,
+      subject: "Parent title supplied by the model",
+      description: "Top-level description",
+      activeForm: "working",
+      owner: null,
+      evidence: null,
+      blockedBy: null,
+      addBlockedBy: null,
+      removeBlockedBy: null,
+      tasks: [
+        { subject: "Audit engine", description: "Review memory code", blockedBy: [], owner: null },
+        { subject: "Audit host", description: "Review renderer", blockedBy: [], owner: null },
+        { subject: "Develop proof", description: "Validate locally", blockedBy: [16, 17], owner: null },
+      ],
+      status: "in_progress",
+      completedLimit: null,
+    };
+    const result = await execute(host, prepareTodoArguments(raw) as unknown as Record<string, unknown>);
+    assert.deepEqual(result.details.ids, [16, 17, 18]);
+    const state = getSessionState(host.ctx as never);
+    assert.deepEqual(state.tasks.slice(15).map((task) => task.subject), ["Audit engine", "Audit host", "Develop proof"]);
+    assert.deepEqual(state.tasks[17]?.blockedBy, [16, 17]);
+    assert.ok(state.tasks.slice(15).every((task) => task.status === "pending"));
   });
 
   it("rejects inapplicable fields on query actions", async () => {

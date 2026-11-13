@@ -164,7 +164,6 @@ export default function piTodos(pi: ExtensionAPI): void {
     ],
     parameters: TodoParamsSchema,
     outputSchema: TodoOutputSchema,
-    constrainedSampling: { type: "json_schema", strict: "prefer" },
     prepareArguments: prepareTodoArguments,
     executionMode: "sequential",
     async execute(_toolCallId, params, _signal, _onUpdate, ctx) {

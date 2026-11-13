@@ -284,20 +284,14 @@ Failures use real tool errors rather than successful no-op results. Messages inc
 - legacy `update` with `status: "completed"` to `complete`;
 - legacy `update` with `status: "pending"` to `reopen`;
 - legacy `update` with `status: "deleted"` to `delete`;
-- double-encoded `tasks` arrays and batch-item objects produced by some providers.
+- double-encoded `tasks` arrays and batch-item objects produced by some providers;
+- removal of server-assigned `id` and lifecycle-only fields from `create`;
+- removal of redundant matching statuses from explicit lifecycle actions;
+- preference for `tasks[]` over top-level single-create fields when a model supplies both.
 
 The plugin never guesses a missing status or invents a mutation. Unknown or malformed keys such as `status”` are rejected.
 
-Provider-side constrained sampling is requested with:
-
-```ts
-{
-  type: "json_schema",
-  strict: "prefer"
-}
-```
-
-Unsupported providers fall back to the normal Pi schema path.
+Provider-side constrained sampling is disabled. With a flat action schema, strict providers can turn optional fields into required nullable fields and encourage models to populate irrelevant properties. Runtime schema validation and high-confidence argument normalization provide the compatibility boundary instead.
 
 ## Tool results and codemode
 

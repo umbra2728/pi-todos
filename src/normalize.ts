@@ -19,6 +19,8 @@ const OPTIONAL_INPUT_FIELDS = new Set([
   "tasks",
   "status",
   "completedLimit",
+  "id",
+  "subject",
 ]);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -70,6 +72,14 @@ export function prepareTodoArguments(args: unknown): TodoParams {
   }
   if (input.action === "add") input.action = "create";
   if (input.action === "done") input.action = "complete";
+  const matchingLifecycleStatus: Partial<Record<string, string>> = {
+    start: "in_progress",
+    complete: "completed",
+    reopen: "pending",
+    delete: "deleted",
+  };
+  if (typeof input.action === "string" && input.status === matchingLifecycleStatus[input.action]) delete input.status;
+  if (input.action === "complete" && input.status === "done") delete input.status;
   if (input.action === "update" && typeof input.status === "string") {
     const action = LEGACY_STATUS_ACTIONS[input.status];
     if (action) {
@@ -85,6 +95,14 @@ export function prepareTodoArguments(args: unknown): TodoParams {
     if (value !== null || !OPTIONAL_INPUT_FIELDS.has(field)) continue;
     if (input.action === "update" && NULLABLE_UPDATE_FIELDS.has(field)) continue;
     delete input[field];
+  }
+  if (input.action === "create") {
+    for (const field of ["id", "activeForm", "evidence", "addBlockedBy", "removeBlockedBy", "status", "completedLimit"]) {
+      delete input[field];
+    }
+    if (Array.isArray(input.tasks)) {
+      for (const field of ["subject", "description", "blockedBy", "owner"]) delete input[field];
+    }
   }
   return input as TodoParams;
 }

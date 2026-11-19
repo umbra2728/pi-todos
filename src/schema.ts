@@ -47,7 +47,7 @@ export const TodoParamsSchema = Type.Object(
       ),
     ),
     completedLimit: Type.Optional(
-      Type.Integer({ minimum: 0, maximum: 100, description: "Recent completed tasks to return; default 3" }),
+      Type.Integer({ minimum: 0, maximum: 100, description: "Only with status completed: how many recent completed tasks to return; default 3. Other list views always show open tasks plus the latest 3 completed." }),
     ),
   },
   { additionalProperties: false },

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.4 - 2026-11-19
+
+- `list` with `status: "all"` returns open tasks and only the three most recent completed tasks; `completedLimit` applies only to `status: "completed"`.
+- List results note how many older completed tasks are hidden.
+- Settle reminders include the three most recent completed tasks and tell the agent not to call `todo list`.
+
 ## 0.1.3 - 2026-11-13
 
 - Support `activeForm` in single-create calls and inside batch items.

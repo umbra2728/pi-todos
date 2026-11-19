@@ -1,10 +1,10 @@
 import type { Theme } from "@earendil-works/pi-coding-agent";
 import { truncateToWidth } from "@earendil-works/pi-tui";
-import { getBlocks, openTasks, selectTasks } from "./reducer.ts";
+import { getBlocks, hiddenCompletedCount, openTasks, selectTasks } from "./reducer.ts";
 import type { ListStatus, Task, TodoConfig, TodoState } from "./types.ts";
 
 export const SETTLE_REMINDER =
-  "Review the open tasks before finishing. If you are intentionally pausing to ask the user a question, waiting for input, or leaving background work running, keep their statuses unchanged and finish normally. Otherwise, continue working and complete the remaining tasks. Reconcile any completed work with the todo list before finishing.";
+  "Review the open tasks before finishing. If you are intentionally pausing to ask the user a question, waiting for input, or leaving background work running, keep their statuses unchanged and finish normally. Otherwise, continue working and complete the remaining tasks. Reconcile any completed work with the todo list before finishing. The current list is below; do not call todo list to review it.";
 
 function plain(value: string): string {
   return value.replace(/[\p{Cc}\p{Zl}\p{Zp}\p{Cf}]+/gu, " ").trim();
@@ -34,8 +34,20 @@ export function formatTaskLine(state: TodoState, task: Task, theme?: Theme): str
   return `${glyph(task, theme)} #${task.id} ${styledSubject}${activity}${owner}${dependencies}`;
 }
 
-export function formatTaskList(state: TodoState, tasks: Task[]): string {
-  return tasks.length ? tasks.map((task) => `[${task.status}] #${task.id} ${plain(task.subject)}${task.activeForm && task.status === "in_progress" ? ` (${plain(task.activeForm)})` : ""}${task.owner ? ` @${plain(task.owner)}` : ""}`).join("\n") : "No tasks";
+function listLine(task: Task): string {
+  const activity = task.activeForm && task.status === "in_progress" ? ` (${plain(task.activeForm)})` : "";
+  const owner = task.owner ? ` @${plain(task.owner)}` : "";
+  return `[${task.status}] #${task.id} ${plain(task.subject)}${activity}${owner}`;
+}
+
+function hiddenCompletedNote(hidden: number): string {
+  return `+${hidden} older completed hidden; use status "completed" with completedLimit only if you need them`;
+}
+
+export function formatTaskList(_state: TodoState, tasks: Task[], hiddenCompleted = 0): string {
+  const lines = tasks.map(listLine);
+  if (hiddenCompleted > 0) lines.push(hiddenCompletedNote(hiddenCompleted));
+  return lines.length ? lines.join("\n") : "No tasks";
 }
 
 export function formatTaskDetails(state: TodoState, task: Task): string {
@@ -100,7 +112,9 @@ export function renderPlainOverlay(state: TodoState, config: TodoConfig): string
 export function formatCommandTasks(state: TodoState, status?: ListStatus, completedLimit = 3): string {
   const tasks = status === undefined
     ? state.tasks.filter((task) => task.status !== "deleted")
-    : selectTasks(state, status, completedLimit);
+    : status === "all"
+      ? state.tasks
+      : selectTasks(state, status, completedLimit);
   if (!tasks.length) return "No tasks";
   const lines: string[] = [];
   for (const group of ["in_progress", "pending", "completed", "deleted"] as const) {
@@ -112,7 +126,10 @@ export function formatCommandTasks(state: TodoState, status?: ListStatus, comple
   return lines.join("\n");
 }
 
-export function settleReminderText(state: TodoState): string {
-  const tasks = openTasks(state);
-  return [SETTLE_REMINDER, ...tasks.map((task) => `#${task.id} [${task.status}] ${plain(task.subject)}`)].join("\n");
+export function settleReminderText(state: TodoState, completedLimit = 3): string {
+  const tasks = selectTasks(state, undefined, completedLimit);
+  const lines = [SETTLE_REMINDER, ...tasks.map(listLine)];
+  const hidden = hiddenCompletedCount(state, tasks);
+  if (hidden > 0) lines.push(hiddenCompletedNote(hidden));
+  return lines.join("\n");
 }

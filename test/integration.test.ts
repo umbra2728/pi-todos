@@ -42,6 +42,23 @@ describe("tool and journal integration", () => {
     }));
   });
 
+  it("keeps list all to open tasks and three recent completed despite a large completedLimit", async () => {
+    const host = createHost();
+    piTodos(host.pi as never);
+    for (let id = 1; id <= 25; id += 1) {
+      await execute(host, { action: "create", subject: `Task ${id}` });
+      if (id <= 23) await execute(host, { action: "complete", id });
+    }
+    const result = (await execute(host, { action: "list", status: "all", completedLimit: 30 })) as {
+      details: TodoToolOutput;
+      content: Array<{ text: string }>;
+    };
+    assert.deepEqual(result.details.tasks?.map((task) => task.id), [21, 22, 23, 24, 25]);
+    assert.match(result.content[0]!.text, /\+20 older completed hidden/);
+    const history = await execute(host, { action: "list", status: "completed", completedLimit: 10 });
+    assert.equal(history.details.tasks?.length, 10);
+  });
+
   it("accepts the exact repeated batch shape emitted by Kimi", async () => {
     const host = createHost();
     piTodos(host.pi as never);

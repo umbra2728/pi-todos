@@ -77,7 +77,12 @@ describe("overlay and recovery view", () => {
     const text = settleReminderText(longState());
     assert.ok(SETTLE_REMINDER.includes("intentionally pausing to ask the user a question"));
     assert.ok(SETTLE_REMINDER.includes("Otherwise, continue working and complete the remaining tasks"));
-    assert.ok(text.includes("#5 [pending] Task 5"));
+    assert.ok(text.includes("[pending] #5 Task 5"));
+    assert.ok(text.includes("[completed] #4 Task 4"));
+    assert.ok(text.includes("[completed] #2 Task 2"));
+    assert.ok(!text.includes("#1 Task 1"));
+    assert.ok(text.includes("+1 older completed hidden"));
+    assert.ok(text.includes("do not call todo list"));
   });
 
   it("formats full and filtered command views", () => {

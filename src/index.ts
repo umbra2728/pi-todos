@@ -3,7 +3,7 @@ import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-a
 import { Text } from "@earendil-works/pi-tui";
 import { loadConfig } from "./config.ts";
 import { prepareTodoArguments } from "./normalize.ts";
-import { applyMutation, assertActionFields, getBlocks, getTask, openTasks, selectTasks } from "./reducer.ts";
+import { applyMutation, assertActionFields, getBlocks, getTask, hiddenCompletedCount, openTasks, selectTasks } from "./reducer.ts";
 import { TODO_OPERATION_TYPE } from "./replay.ts";
 import { TodoOutputSchema, TodoParamsSchema } from "./schema.ts";
 import { commitSessionState, evictSession, getSessionState, restoreSession, sessionKey } from "./store.ts";
@@ -141,7 +141,7 @@ export default function piTodos(pi: ExtensionAPI): void {
         {
           type: "custom_message",
           customType: REMINDER_TYPE,
-          content: settleReminderText(state),
+          content: settleReminderText(state, config().completedInList),
           display: false,
         },
       ],
@@ -160,7 +160,7 @@ export default function piTodos(pi: ExtensionAPI): void {
       "Use todo start before beginning a task and todo complete immediately after verification. start and complete require only the task id; evidence and activeForm are optional.",
       "Use todo reopen to return work to pending. Use todo update only for subject, description, activeForm, owner, evidence, or dependency changes, not for status changes.",
       "Dependencies are real prerequisites: todo start rejects unresolved blockedBy tasks. Multiple tasks may be in_progress and owner is optional.",
-      "todo list returns open tasks plus the latest 3 completed by default. Request completed, deleted, or all explicitly when needed; never resend the full list for a mutation.",
+      "todo list returns open tasks plus the latest 3 completed. Settle reminders already include this list, so do not call todo list just to review it. Use status completed with completedLimit only when older completed tasks are genuinely needed.",
     ],
     parameters: TodoParamsSchema,
     outputSchema: TodoOutputSchema,
@@ -170,10 +170,13 @@ export default function piTodos(pi: ExtensionAPI): void {
       assertActionFields(params as TodoParams);
       const state = getSessionState(ctx);
       if (params.action === "list") {
-        const tasks = selectTasks(state, params.status, params.completedLimit ?? config().completedInList);
+        const defaultLimit = config().completedInList;
+        const limit = params.status === "completed" ? (params.completedLimit ?? defaultLimit) : defaultLimit;
+        const tasks = selectTasks(state, params.status, limit);
         const output: TodoToolOutput = { action: "list", tasks, count: tasks.length };
+        const hidden = params.status === "completed" || params.status === undefined || params.status === "all" ? hiddenCompletedCount(state, tasks) : 0;
         return {
-          content: [{ type: "text", text: formatTaskList(state, tasks) }],
+          content: [{ type: "text", text: formatTaskList(state, tasks, hidden) }],
           details: output,
           structuredContent: output as unknown as JsonValue,
         };

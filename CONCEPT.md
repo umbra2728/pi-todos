@@ -193,10 +193,11 @@ Optional filters:
 }
 ```
 
-- `completedLimit` defaults to `3` and accepts integers from `0` through `100`.
+- `completedLimit` defaults to `3`, accepts integers from `0` through `100`, and applies only to `status: "completed"`.
 - `status: "completed"` selects completed tasks and honors `completedLimit`.
 - `status: "deleted"` selects all tombstones.
-- `status: "all"` returns the complete list, including deleted tasks, without a completed limit.
+- `status: "all"` returns open and deleted tasks plus the three most recently completed tasks; it ignores `completedLimit`.
+- When completed tasks are hidden, the text result ends with a `+N older completed hidden` note.
 
 This keeps forty or more completed tasks out of normal model context while retaining them in session state.
 
@@ -352,12 +353,12 @@ If an agent attempts to settle with open tasks, the extension requests one recon
 The reminder is:
 
 ```text
-Review the open tasks before finishing. If you are intentionally pausing to ask the user a question, waiting for input, or leaving background work running, keep their statuses unchanged and finish normally. Otherwise, continue working and complete the remaining tasks. Reconcile any completed work with the todo list before finishing.
+Review the open tasks before finishing. If you are intentionally pausing to ask the user a question, waiting for input, or leaving background work running, keep their statuses unchanged and finish normally. Otherwise, continue working and complete the remaining tasks. Reconcile any completed work with the todo list before finishing. The current list is below; do not call todo list to review it.
 ```
 
 Behavior:
 
-- The open tasks are appended below this text.
+- The open tasks and the three most recently completed tasks are appended below this text, and the agent is told not to call `todo list` to review them.
 - The continuation is requested through `agent_before_settle` with `continue: true`.
 - The reminder is hidden from the user.
 - The flag resets on a genuine new user message, not on `agent_start`, so the reconciliation continuation cannot retrigger itself.

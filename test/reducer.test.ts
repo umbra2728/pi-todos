@@ -179,7 +179,10 @@ describe("list selection", () => {
     assert.equal(selected.filter((task) => task.status === "completed").length, 3);
     assert.deepEqual(selected.filter((task) => task.status === "completed").map((task) => task.id), [50, 49, 48]);
     assert.equal(selected[0]?.subject, "Open");
-    assert.equal(selectTasks(state, "all").length, 51);
+    const all = selectTasks(state, "all");
+    assert.equal(all.length, 4);
+    assert.deepEqual(all.filter((task) => task.status === "completed").map((task) => task.id), [48, 49, 50]);
+    assert.equal(selectTasks(state, "all", 30).length, 31);
     assert.equal(selectTasks(state, "completed", 0).length, 0);
   });
 });

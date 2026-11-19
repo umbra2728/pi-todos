@@ -109,7 +109,7 @@ Mutable fields are `subject`, `description`, `activeForm`, `owner`, `evidence`, 
 { "action": "get", "id": 2 }
 ```
 
-The default list contains open tasks and the three most recently completed tasks. Deleted tasks appear only when requested with `status: "deleted"` or `status: "all"`.
+The default list and `status: "all"` contain open tasks and the three most recently completed tasks; `all` also includes deleted tasks. `completedLimit` applies only to `status: "completed"`, so older history is never sent to the model unless it explicitly asks for completed tasks. When completed tasks are hidden, the result ends with a `+N older completed hidden` note.
 
 ### Delete and clear
 
@@ -143,7 +143,7 @@ With no arguments, `/todos` shows all non-deleted tasks grouped by status.
 
 After session restoration or compaction, the next model request receives one compact list of open tasks.
 
-If the agent tries to finish with open tasks, the extension requests one reconciliation continuation per genuine user prompt. The reminder explicitly allows intentional pauses for user questions, waiting for input, or background work; otherwise, the agent should continue and finish the remaining work. There is no repeated autonomous loop.
+If the agent tries to finish with open tasks, the extension requests one reconciliation continuation per genuine user prompt. The reminder already contains the open tasks and the three most recently completed tasks, so the agent does not need to call `list`. The reminder explicitly allows intentional pauses for user questions, waiting for input, or background work; otherwise, the agent should continue and finish the remaining work. There is no repeated autonomous loop.
 
 ## Configuration
 

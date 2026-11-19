@@ -331,7 +331,10 @@ function recentCompleted(state: TodoState, limit: number): Task[] {
 }
 
 export function selectTasks(state: TodoState, status?: ListStatus, completedLimit = 3): Task[] {
-  if (status === "all") return state.tasks.map(cloneTask);
+  if (status === "all") {
+    const recent = new Set(recentCompleted(state, completedLimit).map((task) => task.id));
+    return state.tasks.filter((task) => task.status !== "completed" || recent.has(task.id)).map(cloneTask);
+  }
   if (status === "deleted") return state.tasks.filter((task) => task.status === "deleted").map(cloneTask);
   if (status === "completed") return recentCompleted(state, completedLimit);
   if (status === "pending" || status === "in_progress") {
@@ -349,6 +352,11 @@ export function getTask(state: TodoState, id: number): Task {
 
 export function getBlocks(state: TodoState, id: number): number[] {
   return state.tasks.filter((task) => task.status !== "deleted" && task.blockedBy?.includes(id)).map((task) => task.id);
+}
+
+export function hiddenCompletedCount(state: TodoState, tasks: Task[]): number {
+  const total = state.tasks.filter((task) => task.status === "completed").length;
+  return total - tasks.filter((task) => task.status === "completed").length;
 }
 
 export function openTasks(state: TodoState): Task[] {
